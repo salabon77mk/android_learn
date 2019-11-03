@@ -2,7 +2,8 @@ package com.example.myapplication;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import android.media.Image;
+import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Gravity;
@@ -17,16 +18,20 @@ import com.example.myapplication.Models.Question;
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "QUIZACTIVITY";
     private static final String KEY_INDEX = "index";
-    private final boolean decr = true;
+    private static final String KEY_CHEAT = "cheat";
+    private static final int REQUEST_CODE_CHEAT = 0;
+
+    private final boolean mIsDecr = true;
 
     private Button mTrueButton;
     private Button mFalseButton;
+    private Button mCheatButton;
     private ImageButton mNextButton;
     private ImageButton mPrevButton;
     private TextView mQuestionTextView;
-    private boolean[] mAnswered;
     private int mAnsweredCount;
     private int mCorrect;
+//    private boolean mIsCheater;
 
     // Should be an adapter??
     private Question[] mQuestionBank = new Question[] {
@@ -46,16 +51,16 @@ public class MainActivity extends AppCompatActivity {
         Log.d(TAG, "onCreate(Bundle) called");
         setContentView(R.layout.activity_main);
 
-        mAnswered = new boolean[mQuestionBank.length];
         mAnsweredCount = 0;
 
         if(savedInstanceState != null){
             mCurrentIndex = savedInstanceState.getInt(KEY_INDEX, 0);
+      //      mIsCheater = savedInstanceState.getBoolean(KEY_INDEX, false);
         }
 
         mQuestionTextView = (TextView) findViewById(R.id.question_text_view);
-
         updateQuestion();
+
 
         mTrueButton = (Button) findViewById(R.id.true_button);
         mTrueButton.setOnClickListener(new View.OnClickListener() {
@@ -74,11 +79,24 @@ public class MainActivity extends AppCompatActivity {
         });
 
 
+        mCheatButton = (Button) findViewById(R.id.cheat_button);
+        mCheatButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                boolean isTrue = mQuestionBank[mCurrentIndex].isAnswerTrue();
+                Intent intent = Cheat.newIntent(MainActivity.this, isTrue);
+               // startActivity(intent);
+                startActivityForResult(intent, REQUEST_CODE_CHEAT);
+            }
+        });
+
+
         mNextButton = (ImageButton) findViewById(R.id.next_button);
         mNextButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                updateIndex(!decr);
+                updateIndex(!mIsDecr);
+//                mIsCheater = false;
                 updateQuestion();
             }
         });
@@ -87,13 +105,14 @@ public class MainActivity extends AppCompatActivity {
         mPrevButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                updateIndex(decr);
+                updateIndex(mIsDecr);
+//                mIsCheater = false;
                 updateQuestion();
             }
         });
     }
 
-    // TODO Updates current question index and sets prev question to true
+
     private void updateIndex(boolean isDecr){
         if(isDecr){
             do {
@@ -102,11 +121,11 @@ public class MainActivity extends AppCompatActivity {
                     mCurrentIndex += mQuestionBank.length;
                 }
             }
-            while (mAnswered[mCurrentIndex]);
+            while (mQuestionBank[mCurrentIndex].isAnswered());
         }
         else{
             do{ mCurrentIndex = (mCurrentIndex + 1) % mQuestionBank.length; }
-            while (mAnswered[mCurrentIndex]);
+            while (mQuestionBank[mCurrentIndex].isAnswered());
         }
     }
 
@@ -116,7 +135,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void checkAnswer(boolean userPressedTrue){
-        if(mAnswered[mCurrentIndex]){
+        if(mQuestionBank[mCurrentIndex].isAnswered()){
             Toast.makeText(this, R.string.already_answered, Toast.LENGTH_SHORT).show();
             return;
         }
@@ -124,14 +143,20 @@ public class MainActivity extends AppCompatActivity {
         boolean answerIsTrue = mQuestionBank[mCurrentIndex].isAnswerTrue();
         int messageResId = 0;
 
-        if(userPressedTrue == answerIsTrue){
-            messageResId = R.string.correct_toast;
-            mCorrect++;
+        if(mQuestionBank[mCurrentIndex].isCheated()){
+            messageResId = R.string.judgement_toast;
+        }else{
+            if(userPressedTrue == answerIsTrue){
+                messageResId = R.string.correct_toast;
+                mCorrect++;
+            }
+            else{
+                messageResId = R.string.incorrect_toast;
+            }
         }
-        else{
-            messageResId = R.string.incorrect_toast;
-        }
-        mAnswered[mCurrentIndex] = true;
+
+
+        mQuestionBank[mCurrentIndex].setAnswered(true);
         mAnsweredCount++;
 
         Toast t = Toast.makeText(this, messageResId, Toast.LENGTH_SHORT);
@@ -149,9 +174,26 @@ public class MainActivity extends AppCompatActivity {
             mAnsweredCount = 0;
 
             // restart quiz
-            for(int i = 0; i < mAnswered.length; i++)
-                mAnswered[i]= false;
+            for(int i = 0; i < mQuestionBank.length; i++)
+                mQuestionBank[i].resetQuestion();
         }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data){
+        if (resultCode != Activity.RESULT_OK){
+            return;
+        }
+
+        if(requestCode == REQUEST_CODE_CHEAT){
+            if(data == null){
+                return;
+            }
+            if(Cheat.wasAnswerShown(data)){
+                mQuestionBank[mCurrentIndex].setCheated(true);
+            }
+        }
+
     }
 
     @Override
@@ -186,7 +228,7 @@ public class MainActivity extends AppCompatActivity {
 
     // saving the index for when device is rotated(onDestroy is called and then onCreate)
     @Override
-    public void onSaveInstanceState(Bundle savedInstanceState){
+    protected void onSaveInstanceState(Bundle savedInstanceState){
         super.onSaveInstanceState(savedInstanceState);
         Log.i(TAG, "onSaveInstanceState");
         savedInstanceState.putInt(KEY_INDEX, mCurrentIndex);
