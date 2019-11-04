@@ -31,6 +31,9 @@ public class MainActivity extends AppCompatActivity {
     private TextView mQuestionTextView;
     private int mAnsweredCount;
     private int mCorrect;
+
+    // No longer needed as before we wanted to show off how intents communicate from
+    // other activities
 //    private boolean mIsCheater;
 
     // Should be an adapter??
@@ -59,8 +62,6 @@ public class MainActivity extends AppCompatActivity {
         }
 
         mQuestionTextView = (TextView) findViewById(R.id.question_text_view);
-        updateQuestion();
-
 
         mTrueButton = (Button) findViewById(R.id.true_button);
         mTrueButton.setOnClickListener(new View.OnClickListener() {
@@ -78,18 +79,18 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-
         mCheatButton = (Button) findViewById(R.id.cheat_button);
         mCheatButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 boolean isTrue = mQuestionBank[mCurrentIndex].isAnswerTrue();
-                Intent intent = Cheat.newIntent(MainActivity.this, isTrue);
-               // startActivity(intent);
+                boolean isCheated = mQuestionBank[mCurrentIndex].isCheated();
+                Intent intent = Cheat.newIntent(MainActivity.this, isTrue, isCheated);
+                // startActivity(intent);
                 startActivityForResult(intent, REQUEST_CODE_CHEAT);
             }
         });
-
+        updateQuestion();
 
         mNextButton = (ImageButton) findViewById(R.id.next_button);
         mNextButton.setOnClickListener(new View.OnClickListener() {
@@ -132,6 +133,9 @@ public class MainActivity extends AppCompatActivity {
     private void updateQuestion(){
         int question = mQuestionBank[mCurrentIndex].getTextResId();
         mQuestionTextView.setText(question);
+        if(!mQuestionBank[mCurrentIndex].isAnswered()){
+            mCheatButton.setVisibility(View.VISIBLE);
+        }
     }
 
     private void checkAnswer(boolean userPressedTrue){
@@ -155,7 +159,7 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
-
+        mCheatButton.setVisibility(View.INVISIBLE);
         mQuestionBank[mCurrentIndex].setAnswered(true);
         mAnsweredCount++;
 
@@ -166,16 +170,17 @@ public class MainActivity extends AppCompatActivity {
         checkFinish();
     }
 
-
-    public void checkFinish(){
+    private void checkFinish(){
         if(mAnsweredCount == mQuestionBank.length) {
             String result = mCorrect + " / " + mQuestionBank.length;
             Toast.makeText(this, result, Toast.LENGTH_SHORT).show();
             mAnsweredCount = 0;
 
             // restart quiz
-            for(int i = 0; i < mQuestionBank.length; i++)
+            for(int i = 0; i < mQuestionBank.length; i++) {
                 mQuestionBank[i].resetQuestion();
+                Cheat.resetCheatAmount();
+            }
         }
     }
 

@@ -20,6 +20,7 @@
     <string name="already_answered">You\'ve already answered this question!</string>
 
     <string name="warning_text">Are you sure you want to do this?</string>
+    <string name="all_cheats_used">Looks like you\'ve used up all of your cheats!</string>
     <string name="show_answer_button">Show answer</string>
     <string name="cheat_button">Cheat!</string>
     <string name="judgement_toast">Cheating is wrong.</string>
