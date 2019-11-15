@@ -149,7 +149,8 @@ public class MainActivity extends AppCompatActivity {
 
         if(mQuestionBank[mCurrentIndex].isCheated()){
             messageResId = R.string.judgement_toast;
-        }else{
+        }
+        else{
             if(userPressedTrue == answerIsTrue){
                 messageResId = R.string.correct_toast;
                 mCorrect++;

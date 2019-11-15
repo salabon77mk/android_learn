@@ -26,6 +26,7 @@ public class CrimeLab {
             crime.setSolved(i % 2 == 0);
             mCrimes.add(crime);
         }
+
     }
 
     public List<Crime> getCrimes(){
@@ -36,7 +37,7 @@ public class CrimeLab {
     // shouldn't this be a hashmap if every crime has a UUID?
     public Crime getCrime(UUID id){
         for(Crime crime: mCrimes){
-            if(crime.getId() == id){
+            if(crime.getId().equals(id)){
                 return crime;
             }
         }
