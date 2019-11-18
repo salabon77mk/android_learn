@@ -21,7 +21,7 @@ public class CrimePagerActivity extends AppCompatActivity {
     private List<Crime> mCrimes;
 
     public static Intent newIntent(Context packageContext, UUID crimeId){
-        Intent intent = new Intent();
+        Intent intent = new Intent(packageContext, CrimePagerActivity.class);
         intent.putExtra(EXTRA_CRIME_ID, crimeId);
         return intent;
     }
