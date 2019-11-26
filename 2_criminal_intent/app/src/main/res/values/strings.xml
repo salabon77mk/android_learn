@@ -22,6 +22,4 @@
     <string name="show_subtitle">Show subtitles</string>
     <string name="hide_subtitle">Hide subtitles</string>
     <string name="subtitle_format">%1$d crimes</string>
-
-
 </resources>
